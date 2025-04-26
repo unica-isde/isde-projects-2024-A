@@ -1,23 +1,88 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Transformation Result</title>
-</head>
-<body>
-    <h1>Transformation Result for: {{ image_name }}</h1>
-    <ul>
-        <li>Color: {{ color }}</li>
-        <li>Brightness: {{ brightness }}</li>
-        <li>Contrast: {{ contrast }}</li>
-        <li>Sharpness: {{ sharpness }}</li>
-    </ul>
+{% extends "base.html" %}
 
-    <h2>Original Image</h2>
-    <img src="data:image/jpeg;base64,{{ original_b64 }}" alt="Original Image" />
+{% block content %}
+<div class="container">
+    <h1>Result: {{ image_name }}</h1>
 
-    <h2>Transformed Image</h2>
-    <img src="data:image/jpeg;base64,{{ transformed_b64 }}" alt="Transformed Image" />
+    <h2>Original</h2>
+    <img src="data:image/jpeg;base64,{{ original_b64 }}" alt="Original Image" class="result-image">
 
-    <br><a href="/transform">Back to Transform Form</a>
-</body>
-</html>
+    <h2>Transformed</h2>
+    <img src="data:image/jpeg;base64,{{ transformed_b64 }}" alt="Transformed Image" class="result-image">
+
+    <h3>Transformations</h3>
+    <table class="info-table">
+        <tr><th>Property</th><th>Value</th></tr>
+        <tr><td>Color</td><td>{{ color }}</td></tr>
+        <tr><td>Brightness</td><td>{{ brightness }}</td></tr>
+        <tr><td>Contrast</td><td>{{ contrast }}</td></tr>
+        <tr><td>Sharpness</td><td>{{ sharpness }}</td></tr>
+    </table>
+
+    <a href="{{ url_for('show_transform_form') }}" class="btn">Try Another</a>
+</div>
+
+<style>
+    .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 0.5rem;
+        text-align: center;
+        font-size: 14px;
+    }
+
+    h1 {
+        font-size: 18px;
+        margin-bottom: 0.5rem;
+    }
+
+    h2 {
+        font-size: 16px;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    h3 {
+        font-size: 15px;
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .result-image {
+        width: 70%;
+        height: auto;
+        margin: 0.5rem 0;
+    }
+
+    .info-table {
+        width: 100%;
+        margin: 0.5rem 0;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    .info-table th, .info-table td {
+        border: 1px solid #ccc;
+        padding: 6px;
+    }
+
+    .info-table th {
+        background-color: #f0f0f0;
+    }
+
+    .btn {
+        display: inline-block;
+        margin-top: 1rem;
+        padding: 6px 12px;
+        background-color: #007BFF;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 13px;
+    }
+
+    .btn:hover {
+        background-color: #0056b3;
+    }
+</style>
+{% endblock %}
