@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Transformation Result</title>
+</head>
+<body>
+    <h1>Transformation Result for: {{ image_name }}</h1>
+    <ul>
+        <li>Color: {{ color }}</li>
+        <li>Brightness: {{ brightness }}</li>
+        <li>Contrast: {{ contrast }}</li>
+        <li>Sharpness: {{ sharpness }}</li>
+    </ul>
+
+    <h2>Original Image</h2>
+    <img src="data:image/jpeg;base64,{{ original_b64 }}" alt="Original Image" />
+
+    <h2>Transformed Image</h2>
+    <img src="data:image/jpeg;base64,{{ transformed_b64 }}" alt="Transformed Image" />
+
+    <br><a href="/transform">Back to Transform Form</a>
+</body>
+</html>

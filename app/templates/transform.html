@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <h1 style="margin-top:1cm;">Image Transformation</h1>
+
+    <p style="margin-top:1cm;">Modify an image by selecting it from the list or uploading a new one.</p>
+
+    {% if error %}
+        <p style="color: red;"><strong>Error:</strong> {{ error }}</p>
+    {% endif %}
+
+    <form action="{{ url_for('apply_transformations') }}" method="post" enctype="multipart/form-data" style="margin-top:1cm;">
+        <!-- Select an existing image -->
+        <label for="image_name">Select an Existing Image:</label>
+        <select name="image_name" id="image_name">
+            <option value="">-- Choose an Image --</option>
+            {% if images %}
+                {% for img in images %}
+                    <option value="{{ img }}">{{ img }}</option>
+                {% endfor %}
+            {% else %}
+                <option disabled>No images available</option>
+            {% endif %}
+        </select>
+
+        <p style="margin-top: 10px; text-align: left;">OR</p>
+
+        <!-- Upload a new image -->
+        <label for="image_file">Upload a New Image:</label>
+        <input type="file" id="image_file" name="image_file" accept="image/*">
+
+        <hr>
+
+        <div class="slider-container">
+            <label for="color">Color:</label>
+            <input type="range" id="color" name="color" step="0.1" min="0" max="10" value="1.0">
+            <span id="color-value">1.0</span>
+        </div>
+
+        <div class="slider-container">
+            <label for="brightness">Brightness:</label>
+            <input type="range" id="brightness" name="brightness" step="0.1" min="0" max="10" value="1.0">
+            <span id="brightness-value">1.0</span>
+        </div>
+
+        <div class="slider-container">
+            <label for="contrast">Contrast:</label>
+            <input type="range" id="contrast" name="contrast" step="0.1" min="0" max="10" value="1.0">
+            <span id="contrast-value">1.0</span>
+        </div>
+
+        <div class="slider-container">
+            <label for="sharpness">Sharpness:</label>
+            <input type="range" id="sharpness" name="sharpness" step="0.1" min="0" max="10" value="1.0">
+            <span id="sharpness-value">1.0</span>
+        </div>
+
+        <button type="submit" class="btn">Apply Transformations</button>
+    </form>
+
+    {% if original_b64 and transformed_b64 %}
+        <p style="margin-top:1cm;">Original Image:</p>
+        <img src="data:image/jpeg;base64,{{ original_b64 }}" alt="Original Image" style="width:50%;">
+
+        <p style="margin-top:1cm;">Transformed Image:</p>
+        <img src="data:image/jpeg;base64,{{ transformed_b64 }}" alt="Transformed Image" style="width:50%;">
+    {% endif %}
+
+    <p style="margin-top:1cm;">
+        Return to the <a href="{{ url_for('info') }}">Image List</a>.
+    </p>
+
+<style>
+    /* General Styling */
+    select, input[type="range"], input[type="file"] {
+        display: block;
+        margin: 10px 0;
+        width: 50%;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        text-align: center;
+    }
+
+    /* Slider container - flex alignment */
+    .slider-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .slider-container label {
+        width: 100px; /* Label width */
+        text-align: right;
+        font-weight: bold;
+    }
+
+    /* Sliders with 35% width */
+    .slider-container input[type="range"] {
+        width: 35%;
+        -webkit-appearance: none;
+        height: 6px;
+        background: #ddd;
+        border-radius: 4px;
+        outline: none;
+        transition: background 0.3s;
+    }
+
+    .slider-container input[type="range"]:hover {
+        background: #007BFF;
+    }
+
+    /* Numeric value display */
+    .slider-container span {
+        font-weight: bold;
+        width: 40px;
+        text-align: center;
+    }
+
+    /* Button */
+    .btn {
+        display: inline-block;
+        padding: 8px 16px;
+        font-size: 16px;
+        font-weight: bold;
+        color: white;
+        background-color: #007BFF;
+        text-decoration: none;
+        border: none;
+        border-radius: 6px;
+        margin-top: 15px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .btn:hover {
+        background-color: #0056b3;
+    }
+</style>
+
+<script>
+    function updateValue(id, value) {
+        document.getElementById(id).innerText = value;
+    }
+
+    // Ensure sliders return to default values (1.0) when page is reloaded
+    document.addEventListener("DOMContentLoaded", function() {
+        const sliders = ["color", "brightness", "contrast", "sharpness"];
+
+        sliders.forEach(slider => {
+            let input = document.getElementById(slider);
+            let valueDisplay = document.getElementById(slider + "-value");
+
+            // Reset to default value
+            input.value = 1.0;
+            valueDisplay.innerText = "1.0";
+
+            // Update display value when slider is moved
+            input.addEventListener("input", function() {
+                valueDisplay.innerText = input.value;
+            });
+        });
+    });
+</script>
+
+{% endblock %}
