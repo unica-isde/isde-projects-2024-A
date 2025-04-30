@@ -1,6 +1,3 @@
-import json
-from app.forms.classification_form import ClassificationForm
-from app.ml.classification_utils import classify_image
 from pathlib import Path
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse
@@ -18,6 +15,7 @@ templates = Jinja2Templates(directory="app/templates")
 
 # Path for image folder
 IMAGE_FOLDER = Path(config.image_folder_path)
+
 
 @app.get("/info")
 def info() -> dict[str, list[str]]:
@@ -42,22 +40,6 @@ def create_classify(request: Request):
         {"request": request, "images": list_images(), "models": Configuration.models},
     )
 
-
-@app.post("/classifications")
-async def request_classification(request: Request):
-    form = ClassificationForm(request)
-    await form.load_data()
-    image_id = form.image_id
-    model_id = form.model_id
-    classification_scores = classify_image(model_id=model_id, img_id=image_id)
-    return templates.TemplateResponse(
-        "classification_output.html",
-        {
-            "request": request,
-            "image_id": image_id,
-            "classification_scores": json.dumps(classification_scores),
-        },
-    )
 
 #add_modification by Lu
 app.include_router(transformation_router)
