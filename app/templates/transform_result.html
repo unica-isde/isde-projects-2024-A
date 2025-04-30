@@ -2,13 +2,18 @@
 
 {% block content %}
 <div class="container">
-    <h1>Result: {{ image_name }}</h1>
+    <h1>Result: {{ image_name }} ({{ image_format|upper }})</h1>
 
     <h2>Original</h2>
-    <img src="data:image/jpeg;base64,{{ original_b64 }}" alt="Original Image" class="result-image">
+    <img src="data:image/{{ image_format }};base64,{{ original_b64 }}" alt="Original Image" class="result-image">
 
     <h2>Transformed</h2>
-    <img src="data:image/jpeg;base64,{{ transformed_b64 }}" alt="Transformed Image" class="result-image">
+    <img src="data:image/{{ image_format }};base64,{{ transformed_b64 }}" alt="Transformed Image" class="result-image">
+
+    <p style="margin-top:1cm;">Download transformed image:</p>
+    <a download="{{ download_filename }}"
+       href="data:image/{{ image_format }};base64,{{ transformed_b64 }}"
+       class="btn">Download Image</a>
 
     <h3>Transformations</h3>
     <table class="info-table">
