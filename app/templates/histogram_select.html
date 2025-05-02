@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Select an Image for Histogram Analysis</h2>
+
+<form id="histogram-form">
+    <label for="image_id">Choose an Image:</label>
+    <select id="image_id">
+        {% for img in images %}
+        <option value="{{ img }}">{{ img }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit">Generate Histogram</button>
+</form>
+
+<div id="histogram-results" style="display: none; margin-top: 20px;">
+    <h3>Selected Image</h3>
+    <img id="selected-image" width="300" style="display: none;">
+
+    <h3>Histogram (Chart.js)</h3>
+    <canvas id="histogramChart"></canvas>
+
+    <h3>Histogram (Matplotlib)</h3>
+    <img id="histogram-image" width="400" style="display: none;">
+</div>
+
+<!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> --> <!-- this line if it isn't downloaded chart.min.js  -->
+<script src="{{ url_for('static', path='js/chart.min.js') }}"></script> <!-- This line if it's downloaded chart file-->
+<script src="{{ url_for('static', path='js/histogram.js') }}"></script>
+{% endblock %}
