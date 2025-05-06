@@ -1,13 +1,16 @@
 import json
+import io
+import matplotlib.pyplot as plt
+
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+
 from app.config import Configuration
 from app.forms.classification_form import ClassificationForm
 from app.ml.classification_utils import classify_image
 from app.utils import list_images
-
 
 app = FastAPI()
 config = Configuration()
@@ -52,6 +55,56 @@ async def request_classification(request: Request):
         {
             "request": request,
             "image_id": image_id,
+            "model_id": model_id,
             "classification_scores": json.dumps(classification_scores),
         },
     )
+
+
+# New endpoint: Download JSON results
+@app.get("/download/json")
+def download_json(image_id: str, model_id: str):
+    """
+    Downloads the classification results as a JSON file.
+    Expects query parameters for image_id and model_id.
+    """
+    classification_scores = classify_image(model_id=model_id, img_id=image_id)
+    headers = {"Content-Disposition": "attachment; filename=results.json"}
+    return JSONResponse(content=classification_scores, headers=headers)
+
+
+# New endpoint: Download PNG plot of top 5 classification scores
+@app.get("/download/plot")
+def download_plot(image_id: str, model_id: str):
+    """
+    Downloads a PNG file containing a bar chart of the top 5 classification scores.
+    Expects query parameters for image_id and model_id.
+    """
+    classification_scores = classify_image(model_id=model_id, img_id=image_id)
+
+    # Convert list of pairs to dictionary
+    classification_dict = dict(classification_scores)
+
+    # Sort and select top 5
+    sorted_items = sorted(classification_dict.items(), key=lambda x: x[1], reverse=True)[:5]
+    labels, scores = zip(*sorted_items) if sorted_items else ([], [])
+
+    # Create a bar chart using Matplotlib
+    fig, ax = plt.subplots(figsize=(8, 4))
+    ax.bar(labels, scores)
+    ax.set_title("Top 5 Classification Scores")
+    ax.set_xlabel("Class")
+    ax.set_ylabel("Score")
+
+    # Save the plot to an in-memory buffer
+    buf = io.BytesIO()
+    plt.tight_layout()
+    plt.savefig(buf, format="png")
+    plt.close(fig)
+    buf.seek(0)
+
+    headers = {"Content-Disposition": "attachment; filename=results_plot.png"}
+    return StreamingResponse(buf, media_type="image/png", headers=headers)
+
+# The application can be run with a command such as:
+# uvicorn main:app --reload
