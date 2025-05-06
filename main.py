@@ -39,6 +39,13 @@ def create_classify(request: Request):
         {"request": request, "images": list_images(), "models": Configuration.models},
     )
 
+@app.get("/classifications_upload")
+def create_classify(request: Request):
+    return templates.TemplateResponse(
+        "classification_select_upload.html",
+        {"request": request, "images": list_images(), "models": Configuration.models},
+    )
+
 
 @app.post("/classifications")
 async def request_classification(request: Request):
