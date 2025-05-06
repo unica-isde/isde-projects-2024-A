@@ -1,5 +1,5 @@
 import json
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, UploadFile
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -7,7 +7,10 @@ from app.config import Configuration
 from app.forms.classification_form import ClassificationForm
 from app.ml.classification_utils import classify_image
 from app.utils import list_images
-
+from io import BytesIO
+import base64
+from PIL import Image
+import magic
 
 app = FastAPI()
 config = Configuration()
@@ -39,14 +42,6 @@ def create_classify(request: Request):
         {"request": request, "images": list_images(), "models": Configuration.models},
     )
 
-@app.get("/classifications_upload")
-def create_classify(request: Request):
-    return templates.TemplateResponse(
-        "classification_select_upload.html",
-        {"request": request, "images": list_images(), "models": Configuration.models},
-    )
-
-
 @app.post("/classifications")
 async def request_classification(request: Request):
     form = ClassificationForm(request)
@@ -62,3 +57,80 @@ async def request_classification(request: Request):
             "classification_scores": json.dumps(classification_scores),
         },
     )
+
+@app.get("/custom_classifications")
+def create_classify(request: Request):
+    """
+    Renders the selection page for uploading and classifying a custom image.
+
+    Args:
+        request (Request): The current HTTP request.
+
+    Returns:
+        TemplateResponse: Rendered HTML page with the model selection form.
+    """
+    return templates.TemplateResponse(
+        "custom_classification_select.html",
+        {
+            "request": request,
+            "models": Configuration.models
+        },
+    )
+
+
+@app.post("/custom_classifications")
+async def upload_file(file: UploadFile, request: Request):
+    """
+    Handles the upload of an image file and performs classification using the selected model.
+
+    Args:
+        file (UploadFile): The image file provided by the user.
+        request (Request): The incoming HTTP request.
+
+    Returns:
+        TemplateResponse: A rendered template showing the classification results.
+    """
+    try:
+        # Read the uploaded file content
+        file_content = await file.read()
+
+        # Detect the MIME type of the uploaded file
+        mime = magic.Magic(mime=True)
+        file_type = mime.from_buffer(file_content)
+
+        # Ensure the uploaded file is an image
+        if not file_type.startswith("image"):
+            raise ValueError("The uploaded file is not a valid image.")
+
+        # Load the image from memory
+        image_buffer = BytesIO(file_content)
+        image = Image.open(image_buffer)
+
+        # Convert the image to PNG format and store it in memory
+        png_stream = BytesIO()
+        image.save(png_stream, format="PNG")
+
+        # Encode the image in base64 to be used in HTML
+        encoded_image = base64.b64encode(png_stream.getvalue()).decode("utf-8")
+        data_url = f"data:image/png;base64,{encoded_image}"
+
+        # Load selected model and perform classification
+        form = ClassificationForm(request)
+        await form.load_data()
+        model_id = form.model_id
+        classification_scores = classify_image(
+            model_id=model_id, img_id=None, custom_img_id=image
+        )
+
+        # Render the classification results
+        return templates.TemplateResponse(
+            "custom_classification_output.html",
+            {
+                "request": request,
+                "image_id": data_url,
+                "classification_scores": json.dumps(classification_scores),
+            },
+        )
+    except Exception as e:
+        return {"error": f"An error occurred during the image upload: {str(e)}"}
+
