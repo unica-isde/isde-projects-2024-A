@@ -2,36 +2,72 @@
 
 {% block content %}
 
-    <style>
-        .large-front-thumbnail {
-            position: relative;
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin: 0 auto;
-        }
+<style>
+    .large-front-thumbnail {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+    }
+    .chart-container {
+        width: 90%;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .download-buttons {
+        margin-top: 20px;
+    }
+</style>
 
-    </style>
-    <div class="row">
-        <div class="col">
-            <div class="card">
-                <img class="large-front-thumbnail"
-                     src="{{ 'static/imagenet_subset/'+image_id }} "
-                     alt={{ image_id }}/>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card">
-                <div class="row">
-                    <canvas id="classificationOutput" style="width: 50%; margin: auto; padding: 20px;"></canvas>
-                    <div class="align-items-center">
-                        <h2 id="waitText"></h2>
-                        </div>
-                    </div>
-                </div>
-                <a class="btn btn-primary" href="/classifications" role="button">Back</a>
+<div class="row">
+    <!-- Left column: the image -->
+    <div class="col-md-6">
+        <div class="card">
+            <img
+                class="large-front-thumbnail"
+                src="{{ 'static/imagenet_subset/' + image_id }}"
+                alt="{{ image_id }}"
+            />
         </div>
     </div>
-    <script src="{{ "static/graph.js" }}" id="makeGraph" classification_scores="{{classification_scores}}"></script>
+
+    <!-- Right column: the chart and buttons -->
+    <div class="col-md-6">
+        <div class="card chart-container">
+            <!-- Canvas for on-page bar chart (via graph.js) -->
+            <canvas id="classificationOutput"></canvas>
+        </div>
+        <div class="download-buttons">
+            <!-- “Back” button to go to the classification selection page -->
+            <a class="btn btn-primary" href="/classifications" role="button">
+                Back
+            </a>
+            <!-- “Download results” button for JSON file -->
+            <a
+                class="btn btn-secondary"
+                href="/download/json?image_id={{ image_id }}&model_id={{ model_id }}"
+                download="results.json"
+            >
+                Download results
+            </a>
+            <!-- “Download plot” button for PNG file -->
+            <a
+                class="btn btn-secondary"
+                href="/download/plot?image_id={{ image_id }}&model_id={{ model_id }}"
+                download="results_plot.png"
+            >
+                Download plot
+            </a>
+        </div>
+    </div>
+
+</div>
+
+<!-- Pass classification scores to graph.js so it can render the bar chart on the page -->
+<script
+    src="{{ 'static/graph.js' }}"
+    id="makeGraph"
+    classification_scores="{{ classification_scores }}">
+</script>
 {% endblock %}
 

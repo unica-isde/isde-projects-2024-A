@@ -5,3 +5,6 @@ requests
 Pillow
 python-multipart
 uvicorn
+matplotlib
+opencv-python
+python-magic-bin
