@@ -13,7 +13,7 @@ import base64
 from PIL import Image
 import magic
 
-from fastapi import FastAPI, Request, UploadFile
+from fastapi import FastAPI, Request, UploadFile, Form
 from fastapi.responses import HTMLResponse, JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -22,17 +22,19 @@ from app.config import Configuration
 from app.utils import list_images, IMAGE_FOLDER
 from app.forms.classification_form import ClassificationForm
 from app.ml.classification_utils import classify_image
+from app.transformation import router as transformation_router
 
 
 # Ensure `app/` is in the import path
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))  # Add `app/` to import path
-
 
 app = FastAPI()
 config = Configuration()
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
+
+IMAGE_FOLDER = Path(config.image_folder_path)
 
 @app.get("/info")
 def info() -> dict[str, list[str]]:
@@ -80,6 +82,10 @@ async def request_classification(request: Request):
             "classification_scores": json.dumps(classification_scores),
         },
     )
+
+
+#2
+app.include_router(transformation_router)
 
 #4-upload-image-button
 @app.get("/custom_classifications")
@@ -207,7 +213,7 @@ def download_plot(image_id: str, model_id: str):
 # The application can be run with a command such as:
 # uvicorn main:app --reload
 
-#-----Doris-----
+#1
 # Register the histogram API routes
 #app.include_router(histogram_router) #questa linea se con modifiche in file esterno
 
@@ -255,3 +261,4 @@ def get_histogram_image(image_id: str):
     plt.close()
 
     return Response(content=buffer.getvalue(), media_type="image/png")
+
