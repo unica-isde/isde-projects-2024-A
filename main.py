@@ -1,23 +1,33 @@
+
+import os
+import sys
 import json
 import io
+import cv2
+import matplotlib
+matplotlib.use('Agg')  # Prevents GUI issues with matplotlib
 import matplotlib.pyplot as plt
+from pathlib import Path
+import numpy as np
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.config import Configuration
+from app.utils import list_images, IMAGE_FOLDER
 from app.forms.classification_form import ClassificationForm
 from app.ml.classification_utils import classify_image
-from app.utils import list_images
+
+# Ensure `app/` is in the import path
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))  # Add `app/` to import path
 
 app = FastAPI()
 config = Configuration()
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
-
 
 @app.get("/info")
 def info() -> dict[str, list[str]]:
@@ -60,7 +70,7 @@ async def request_classification(request: Request):
         },
     )
 
-
+# 3-download-results-button
 # New endpoint: Download JSON results
 @app.get("/download/json")
 def download_json(image_id: str, model_id: str):
@@ -108,3 +118,52 @@ def download_plot(image_id: str, model_id: str):
 
 # The application can be run with a command such as:
 # uvicorn main:app --reload
+
+#-----Doris-----
+# Register the histogram API routes
+#app.include_router(histogram_router) #questa linea se con modifiche in file esterno
+
+@app.get("/histogram", response_class=HTMLResponse, name="get_histogram_page")
+def get_histogram_page(request: Request):
+    return templates.TemplateResponse(
+        "histogram_select.html",
+        {
+            "request": request,
+            "images": list_images()
+        }
+    )
+
+@app.get("/histogram/json", response_class=JSONResponse)
+def get_histogram_json(image_id: str):
+    image_path = Path(IMAGE_FOLDER) / image_id
+    if not image_path.exists():
+        return JSONResponse(status_code=404, content={"error": "Image not found"})
+
+    image = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
+    hist = cv2.calcHist([image], [0], None, [256], [0, 256])
+    return {
+        "image_id": image_id,
+        "histogram": hist.flatten().tolist()
+    }
+
+@app.get("/histogram/image")
+def get_histogram_image(image_id: str):
+    image_path = Path(IMAGE_FOLDER) / image_id
+    if not image_path.exists():
+        return JSONResponse(status_code=404, content={"error": "Image not found"})
+
+    image = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
+    hist = cv2.calcHist([image], [0], None, [256], [0, 256])
+
+    plt.figure()
+    plt.plot(hist, color='black')
+    plt.xlabel('Pixel Value')
+    plt.ylabel('Frequency')
+    plt.title(f'Histogram of {image_id}')
+
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png')
+    buffer.seek(0)
+    plt.close()
+
+    return Response(content=buffer.getvalue(), media_type="image/png")
