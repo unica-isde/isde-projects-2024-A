@@ -49,7 +49,14 @@ def home(request: Request):
 def create_classify(request: Request):
     return templates.TemplateResponse(
         "classification_select.html",
-        {"request": request, "images": list_images(), "models": Configuration.models},
+         {
+            "request": request,
+            "images": list_images(),
+            "models": Configuration.models,
+             #little modification for possibility of change default image
+            "selected_image": "n07714571_head_cabbage.JPEG",  # <--- CHANGE Def image HERE
+            "selected_model": Configuration.models[0],  # pick a different default model
+        },
     )
 
 
