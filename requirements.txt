@@ -4,4 +4,7 @@ torchvision
 requests
 Pillow
 python-multipart
+matplotlib
+opencv-python
 python-magic-bin
+
