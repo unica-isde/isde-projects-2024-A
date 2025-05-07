@@ -2,35 +2,81 @@
 
 {% block content %}
 
-    <style>
-        .large-front-thumbnail {
-            position: relative;
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin: 0 auto;
-        }
+<style>
+    .large-front-thumbnail {
+        position: relative;
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+    }
+    .chart-container {
+        width: 90%;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .download-buttons {
+        margin-top: 20px;
+    }
+</style>
 
-    </style>
-    <div class="row">
-        <div class="col">
-            <div class="card">
-                <img class="large-front-thumbnail"
-                     src="{{ image_id }} "
-                     alt={{ image_id }}/>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card">
-                <div class="row">
-                    <canvas id="classificationOutput" style="width: 50%; margin: auto; padding: 20px;"></canvas>
-                    <div class="align-items-center">
-                        <h2 id="waitText"></h2>
-                        </div>
-                    </div>
-                </div>
-                <a class="btn btn-primary" href="/custom_classifications" role="button">Back</a>
+<div class="row">
+    <!-- Left column: the uploaded image -->
+    <div class="col-md-6">
+        <div class="card">
+            <img
+                class="large-front-thumbnail"
+                src="{{ image_id }}"
+                alt="Uploaded Image"
+            />
         </div>
     </div>
-    <script src="{{ "static/graph.js" }}" id="makeGraph" classification_scores="{{classification_scores}}"></script>
+
+    <!-- Right column: chart and buttons -->
+    <div class="col-md-6">
+        <div class="card chart-container">
+            <canvas id="classificationOutput"></canvas>
+        </div>
+        <div class="download-buttons">
+            <a class="btn btn-primary" href="/custom_classifications" role="button">
+                Back
+            </a>
+
+            <!-- Download JSON -->
+            <form action="/download/json" method="post" style="display: inline;">
+                <input type="hidden" name="image_id" value="{{ image_id }}">
+                <input type="hidden" name="model_id" value="{{ model_id }}">
+                <input type="hidden" name="classification_scores" value='{{ classification_scores | safe }}'>
+                <button type="submit" class="btn btn-secondary">Download results</button>
+            </form>
+
+            <!-- Download plot already calculated -->
+            <button onclick="downloadCanvasImage()" class="btn btn-secondary">
+                Download plot
+            </button>
+
+        </div>
+    </div>
+</div>
+
+<!-- Pass scores to graph.js -->
+<script
+    src="{{ url_for('static', path='graph.js') }}"
+    id="makeGraph"
+    classification_scores="{{ classification_scores }}">
+</script>
+
+<!-- JavaScript for download plot -->
+<script>
+function downloadCanvasImage() {
+    var canvas = document.getElementById("classificationOutput");
+    var image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+
+    var a = document.createElement('a');
+    a.href = image;
+    a.download = 'classification_plot.png';
+    a.click();
+}
+</script>
+
 {% endblock %}
