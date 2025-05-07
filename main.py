@@ -166,41 +166,72 @@ async def upload_file(file: UploadFile, request: Request):
 
 # 3-download-results-button
 # New endpoint: Download JSON results
-@app.get("/download/json")
-def download_json(image_id: str, model_id: str):
-    """
-    Downloads the classification results as a JSON file.
-    Expects query parameters for image_id and model_id.
-    """
-    classification_scores = classify_image(model_id=model_id, img_id=image_id)
+def is_base64_image(data: str) -> bool:
+    return data.startswith("data:image")
+
+@app.api_route("/download/json", methods=["GET", "POST"])
+async def download_json(
+    request: Request,
+    image_id: str = None,
+    model_id: str = None,
+    classification_scores: str = Form(None)
+):
+    # POST → form
+    if request.method == "POST":
+        form = await request.form()
+        image_id = form.get("image_id")
+        model_id = form.get("model_id")
+        classification_scores = form.get("classification_scores")
+
+    # If data already calculated
+    if classification_scores:
+        scores = json.loads(classification_scores)
+    else:
+        if is_base64_image(image_id):
+            header, encoded = image_id.split(",", 1)
+            image_data = base64.b64decode(encoded)
+            img = Image.open(BytesIO(image_data))
+            scores = classify_image(model_id=model_id, img_id=None, custom_img_id=img)
+        else:
+            scores = classify_image(model_id=model_id, img_id=image_id)
+
     headers = {"Content-Disposition": "attachment; filename=results.json"}
-    return JSONResponse(content=classification_scores, headers=headers)
+    return JSONResponse(content=scores, headers=headers)
 
+@app.api_route("/download/plot", methods=["GET", "POST"])
+async def download_plot(
+    request: Request,
+    image_id: str = None,
+    model_id: str = None,
+    classification_scores: str = Form(None)
+):
+    if request.method == "POST":
+        form = await request.form()
+        image_id = form.get("image_id")
+        model_id = form.get("model_id")
+        classification_scores = form.get("classification_scores")
 
-# New endpoint: Download PNG plot of top 5 classification scores
-@app.get("/download/plot")
-def download_plot(image_id: str, model_id: str):
-    """
-    Downloads a PNG file containing a bar chart of the top 5 classification scores.
-    Expects query parameters for image_id and model_id.
-    """
-    classification_scores = classify_image(model_id=model_id, img_id=image_id)
+    if classification_scores:
+        scores = dict(json.loads(classification_scores))
+    else:
+        if is_base64_image(image_id):
+            header, encoded = image_id.split(",", 1)
+            image_data = base64.b64decode(encoded)
+            img = Image.open(BytesIO(image_data))
+            scores = classify_image(model_id=model_id, img_id=None, custom_img_id=img)
+        else:
+            scores = classify_image(model_id=model_id, img_id=image_id)
 
-    # Convert list of pairs to dictionary
-    classification_dict = dict(classification_scores)
-
-    # Sort and select top 5
+    classification_dict = dict(scores)
     sorted_items = sorted(classification_dict.items(), key=lambda x: x[1], reverse=True)[:5]
-    labels, scores = zip(*sorted_items) if sorted_items else ([], [])
+    labels, values = zip(*sorted_items) if sorted_items else ([], [])
 
-    # Create a bar chart using Matplotlib
     fig, ax = plt.subplots(figsize=(8, 4))
-    ax.bar(labels, scores)
+    ax.bar(labels, values)
     ax.set_title("Top 5 Classification Scores")
     ax.set_xlabel("Class")
     ax.set_ylabel("Score")
 
-    # Save the plot to an in-memory buffer
     buf = io.BytesIO()
     plt.tight_layout()
     plt.savefig(buf, format="png")
@@ -209,6 +240,7 @@ def download_plot(image_id: str, model_id: str):
 
     headers = {"Content-Disposition": "attachment; filename=results_plot.png"}
     return StreamingResponse(buf, media_type="image/png", headers=headers)
+
 
 # The application can be run with a command such as:
 # uvicorn main:app --reload
