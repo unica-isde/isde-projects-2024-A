@@ -3,11 +3,47 @@
 {% block content %}
 
     <p style="margin-top:1cm;">This service provides the output scores for popular deep networks
-        from the 
+        from the
             Torchvision model zoo. Go
         <a href={{url_for("create_classify")}}>here</a> for
         trying out the service.</p>
+
+    <p style="margin-top:1cm;">Also you can modify an image
+        <a href="{{ url_for('show_transform_form') }}" > Edit an Image</a>
+
     <p style="margin-top:1cm;">For the list of models and images
         available, click
         <a href={{url_for("info")}}>here</a>.</p>
+
+ <p style="margin-top:1cm;">
+        To analyze an image and visualize its histogram, go
+        <a href="{{ url_for('get_histogram_page') }}">here</a>.
+    </p>
+
+<style>
+        /* Center the content and add spacing */
+        h1 {
+            font-size: 26px;
+            color: #333;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            background-color: #007BFF;
+            text-decoration: none;
+            border-radius: 8px;
+            margin: 15px;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+    </style>
+
 {% endblock %}
